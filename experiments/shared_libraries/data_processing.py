@@ -12,6 +12,8 @@ from typing import Dict, List, Tuple
 from fastf1.core import Session
 
 
+
+
 def get_data_by_circuit(sessions: List[Session], compound_map: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     sessions_and_compound_mappings = _join_sessions_and_compound_mappings(sessions, compound_map)
 
@@ -37,6 +39,8 @@ def get_data_by_circuit(sessions: List[Session], compound_map: pd.DataFrame) -> 
 
     return data_by_circuit
 
+def remove_laps_affected_by_unexpected_events(data: pd.DataFrame) -> None:
+    data.drop(data[data["TrackStatus"].isin(["1", "2"]).__neg__()].index, inplace=True)
 
 def remove_outliers(data: pd.DataFrame) -> None:
     Q1 = data["LapTimeZScore"].quantile(0.25)
@@ -44,8 +48,25 @@ def remove_outliers(data: pd.DataFrame) -> None:
     IQR = Q3 - Q1
     lower_bound = Q1 - 1.5 * IQR
     upper_bound = Q3 + 1.5 * IQR
-    data.drop(data[(data["LapTimeZScore"] >= lower_bound) & (data["LapTimeZScore"] <= upper_bound)].index, inplace=True)
+    data.drop(data[(data["LapTimeZScore"] < lower_bound) & (data["LapTimeZScore"] > upper_bound)].index, inplace=True)
 
+def remove_missing_values(data: pd.DataFrame) -> None:
+    selected_columns = [
+        "LapTimeZScore",
+        "IsPitLap",
+        "Compound",
+        "TyreLife",
+        "FreshTyre",
+        "LapNumber",
+        "AirTemp",
+        "Humidity",
+        "Pressure",
+        "Rainfall",
+        "TrackTemp",
+        "WindSpeed",
+        "WindDirection"
+    ]
+    data.dropna(subset=selected_columns, inplace=True)
 
 def add_real_compound(data: pd.DataFrame) -> None:
     for idx in data.index:
@@ -75,7 +96,6 @@ def make_wind_direction_categorical(data: pd.DataFrame) -> None:
 def remove_special_compounds(data: pd.DataFrame) -> None:
     allowed_compounds = ["SOFT", "MEDIUM", "HARD"]
     data.drop(data[data["Compound"].isin(allowed_compounds) == False].index, axis="index", inplace=True)
-
 
 def remove_columns_for_ml(data: pd.DataFrame) -> None:
     selected_columns = [
