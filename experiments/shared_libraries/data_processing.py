@@ -39,8 +39,11 @@ def get_data_by_circuit(sessions: List[Session], compound_map: pd.DataFrame) -> 
 
     return data_by_circuit
 
+def remove_first_laps_with_pit_stop(data: pd.DataFrame) -> None:
+    data.drop(data[(data["LapNumber"] == 1) & (data["IsPitLap"] == True)].index, inplace=True)
+
 def remove_laps_affected_by_unexpected_events(data: pd.DataFrame) -> None:
-    data.drop(data[data["TrackStatus"].isin(["1", "2"]).__neg__()].index, inplace=True)
+    data.drop(data[~data["TrackStatus"].apply(lambda status: "1" in status)].index, inplace=True)
 
 def remove_outliers(data: pd.DataFrame) -> None:
     Q1 = data["LapTimeZScore"].quantile(0.25)
@@ -97,7 +100,7 @@ def remove_special_compounds(data: pd.DataFrame) -> None:
     allowed_compounds = ["SOFT", "MEDIUM", "HARD"]
     data.drop(data[data["Compound"].isin(allowed_compounds) == False].index, axis="index", inplace=True)
 
-def remove_columns_for_ml(data: pd.DataFrame) -> None:
+def select_columns_for_ml(data: pd.DataFrame) -> None:
     selected_columns = [
         "LapTimeZScore",
         "IsPitLap",
