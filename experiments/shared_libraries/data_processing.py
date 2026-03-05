@@ -107,7 +107,6 @@ def select_columns_for_ml(data: pd.DataFrame) -> None:
         "Compound",
         "RealCompound",
         "TyreLife",
-        "FreshTyre",
         "LapNumber",
         "AirTemp",
         "Humidity",
@@ -118,6 +117,19 @@ def select_columns_for_ml(data: pd.DataFrame) -> None:
         "WindDirection"
     ]
     data.drop([c for c in data.columns if c not in selected_columns], axis="columns", inplace=True)
+
+def add_missing_dummy_columns(data: pd.DataFrame) -> None:
+    columns = []
+    for compound in ["SOFT", "MEDIUM", "HARD"]:
+        columns.append(compound)
+    for real_compound in ["C1", "C2", "C3", "C4", "C5"]:
+        columns.append(f"RealCompound_{real_compound}")
+    for direction in ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]:
+        columns.append(f"WindDirection_{direction}")
+
+    for column in columns:
+        if column not in data.columns:
+            data[column] = False
 
 def _join_sessions_and_compound_mappings(sessions: List[Session], compounds_map: pd.DataFrame) -> List[Tuple[Session, pd.DataFrame]]:
     # Create queue of compound data
