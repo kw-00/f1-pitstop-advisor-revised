@@ -1,9 +1,14 @@
 
 from typing import Literal, Dict, List, TypedDict
 
+from sklearn.base import BaseEstimator, RegressorMixin
+
 import shared_libraries.data_processing as processing
+import shared_libraries.algorithms as algorithms
 
 import pandas as pd
+import itertools
+import statistics
 
 
 
@@ -41,6 +46,39 @@ class __Strategy:
         self.initial_compound: CompoundType = initial_compound
         self.stops = stops
 
+    def __str__(self) -> str:
+        return f"Strategy[{[self.initial_compound] + list(self.stops.values())}, {list(self.stops.keys())}]"
+    
+    def __repr__(self) -> str:
+        return str(self)
+    
+def evaluate_strategies(strategy_data: StrategyData, model) -> pd.DataFrame:
+    strategies_df = strategy_data["Strategies"]
+    laps_df = strategy_data["Laps"]
+
+    def get_score(strategy_id: int) -> float:
+        laps = laps_df.drop(laps_df[laps_df["StrategyId"] == strategy_id].index, axis="index").drop("StrategyId", axis="columns")
+        strategy_z_scores = model.predict(laps)
+        mean = statistics.mean(strategy_z_scores)
+        return mean
+    
+
+    def get_score_with_message(strategy_id: int) -> float:
+        print(f"Evaluating strategy with ID of {strategy_id}...")
+        return get_score(strategy_id)
+
+
+    mean_z_scores = (
+        strategies_df["Id"]
+            .drop(strategies_df[~strategies_df["Id"].isin(list(range(100)))].index, axis="index")
+            .apply(get_score_with_message)
+    )
+    
+    print("Done.")
+    return pd.DataFrame({
+        "MeanLapTimeZScore": mean_z_scores
+    })
+
 def prepare_strategy_data(
             compound_mapping: CompoundMapping,
             weather: Weather, 
@@ -63,18 +101,47 @@ def prepare_strategy_data(
     }
 
 
+compound_types = ["SOFT", "MEDIUM", "HARD"]
 def _prepare_strategies(race_length: int, min_stint_length: int, max_stint_length: int) -> List[__Strategy]:
-    # TODO - strategy generation
-    return [
-        __Strategy("SOFT", {20: "MEDIUM"}),
-        __Strategy("MEDIUM", {25: "HARD"})
-    ]
+    if min_stint_length < 1:
+        raise RuntimeError("min_stint_length cannot be less than 1.")
+    if max_stint_length < min_stint_length:
+        raise RuntimeError("max_stint_length must not be less than min_stint_length.")
+    last_possible_stop = race_length - min_stint_length
+    if min_stint_length > last_possible_stop:
+        raise RuntimeError("min_stint_length is too long relative to race_length for any stops to occur.")
+    
+    min_stops = max((race_length - (max_stint_length - 1)) // max_stint_length, 0)
+    max_stops = max(((race_length - (min_stint_length - 1))) // min_stint_length, 0)
+
+    all_possible_stop_plans = []
+    possible_compound_combinations = []
+    for stop_count in range(min_stops, max_stops + 1):
+        all_possible_stop_plans.append(algorithms.spaced_combinations(stop_count, race_length, min_stint_length, max_stint_length))
+        combinations =  itertools.combinations_with_replacement(compound_types, stop_count + 1)
+        combinations_with_at_least_two_compound_types = filter(lambda c: len(set(c)) >= 2, combinations)
+        possible_compound_combinations.append(list(combinations_with_at_least_two_compound_types))
+
+    strategies = []
+    for stop_plans, compound_combinations in zip(all_possible_stop_plans, possible_compound_combinations):
+        for plan in stop_plans:
+            for compounds in compound_combinations:
+                initial_compound = compounds[0]
+                pit_compounds = compounds[1:]
+                pit_stops = {}
+                for compound, stop in zip(pit_compounds, plan):
+                    pit_stops[stop] = compound
+                strategies.append(__Strategy(initial_compound, pit_stops))
+
+    return strategies
+
 
 def _create_strategy_dataframe(strategies: List[__Strategy]) -> pd.DataFrame:
     return pd.DataFrame({
         "Id": list(range(len(strategies))),
         "Strategy": strategies
     })
+
 
 def _prepare_lap_data(strategy_dataframe: pd.DataFrame, race_length: int) -> pd.DataFrame:
     race_dfs = []

@@ -121,7 +121,7 @@ def select_columns_for_ml(data: pd.DataFrame) -> None:
 def add_missing_dummy_columns(data: pd.DataFrame) -> None:
     columns = []
     for compound in ["SOFT", "MEDIUM", "HARD"]:
-        columns.append(compound)
+        columns.append(f"Compound_{compound}")
     for real_compound in ["C1", "C2", "C3", "C4", "C5"]:
         columns.append(f"RealCompound_{real_compound}")
     for direction in ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]:

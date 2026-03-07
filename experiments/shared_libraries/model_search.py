@@ -15,9 +15,16 @@ from sklearn.pipeline import make_pipeline
 
 from sklearn.base import clone
 
-from typing import Dict
+from typing import Any, Dict
 
 import time
+
+QUICK_SEARCH: Dict[str, Any] = {
+    "XGBRegressor": GridSearchCV(
+        XGBRegressor(random_state=42, n_jobs=-1, objective="reg:squarederror", verbosity=0),
+        {}
+    )
+}
 
 
 DEFAULT_SEARCHES = {
@@ -171,10 +178,10 @@ DEFAULT_SEARCHES = {
     ),
 }
 
-def search(data: pd.DataFrame, target_label: str) -> Dict[str, GridSearchCV]:
+def search(data: pd.DataFrame, target_label: str, search_template: Dict[str, GridSearchCV]) -> Dict[str, GridSearchCV]:
     X, y = data.drop(target_label, axis="columns"), data[target_label]
     searches = {}
-    for search_key, search_clone in DEFAULT_SEARCHES.items():
+    for search_key, search_clone in search_template.items():
         start_time = time.time()
         print(f"Fitting {search_key}... ".ljust(50), end="")
         search_clone = clone(search_clone)
