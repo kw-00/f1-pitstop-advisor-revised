@@ -35,7 +35,7 @@ class StrategyDataWithoutWeatherAndCompoundMapping(TypedDict):
     Laps: pd.DataFrame
     Strategies: pd.DataFrame
 
-class FullStrategyData(TypedDict):
+class StrategyData(TypedDict):
     Laps: pd.DataFrame
     Strategies: pd.DataFrame
 
@@ -56,12 +56,16 @@ class __Strategy:
     def __repr__(self) -> str:
         return str(self)
     
-def evaluate_strategies(strategy_data: FullStrategyData, model) -> pd.DataFrame:
-    strategies_df = strategy_data["Strategies"]
+def evaluate_strategies(strategy_data: StrategyData, model) -> pd.DataFrame:
+    strategies_df = strategy_data["Strategies"].convert_dtypes()
     laps_df = strategy_data["Laps"]
+    non_ml_part = laps_df["StrategyId"]
+    ml_part = laps_df.drop("StrategyId", axis="columns")
+    ml_part = pd.get_dummies(ml_part)
+    processing.add_missing_dummy_columns(ml_part)
 
     def get_score(strategy_id: int) -> float:
-        laps = laps_df.drop(laps_df[laps_df["StrategyId"] == strategy_id].index, axis="index").drop("StrategyId", axis="columns")
+        laps = laps_df.drop(laps_df[laps_df["StrategyId"] == strategy_id].index, axis="index").drop("StrategyId", axis="columns").convert_dtypes()
         strategy_z_scores = model.predict(laps)
         mean = statistics.mean(strategy_z_scores)
         return mean
@@ -79,9 +83,16 @@ def evaluate_strategies(strategy_data: FullStrategyData, model) -> pd.DataFrame:
     )
     
     print("Done.")
-    return pd.DataFrame({
-        "MeanLapTimeZScore": mean_z_scores
-    })
+    return pd.concat(
+        [
+            strategies_df,
+            pd.DataFrame({
+                "MeanLapTimeZScore": mean_z_scores
+            })
+        ],
+        axis="columns",
+        ignore_index=True
+    )
 
 def prepare_strategy_data_without_weather_and_weather_context(
             race_length: int, 
@@ -101,7 +112,7 @@ def prepare_full_strategy_data(
             basic_strategy_data: StrategyDataWithoutWeatherAndCompoundMapping,
             compound_mapping: CompoundMapping,
             weather: Weather
-        ) -> FullStrategyData:
+        ) -> StrategyData:
     strategies_df = basic_strategy_data["Strategies"]
     lap_data = basic_strategy_data["Laps"]
     real_compounds = _get_real_compounds(lap_data, compound_mapping)
@@ -113,7 +124,7 @@ def prepare_full_strategy_data(
 
     return {
         "Strategies": strategies_df,
-        "Laps": lap_data
+        "Laps": dummies
     }
 
 

@@ -39,7 +39,7 @@ def prepare_example_weather_data() -> Dict[str, utils.Weather]:
     }
 
 
-def prepare_example_compound_mappins() -> Dict[str, utils.CompoundMapping]:
+def prepare_example_compound_mappings() -> Dict[str, utils.CompoundMapping]:
     return {
         "Fast": {
             "SOFT": "C1",
@@ -58,11 +58,14 @@ def prepare_example_compound_mappins() -> Dict[str, utils.CompoundMapping]:
         }
     }
 
+StrategyDataByConditionId = Dict[int, utils.StrategyData]
+AllStrategyDataByCircuit = Dict[str, StrategyDataByConditionId]
+
 class SimulationResults(TypedDict):
     WeatherAndMappingCombinations: pd.DataFrame
-    FullStrategyData: Dict[int, utils.FullStrategyData]
+    FullStrategyData: AllStrategyDataByCircuit
 
-def prepare_data_for_simulation(
+def prepare_simulation(
     circuits: List[str],
     compound_mappings: Dict[str, utils.CompoundMapping],
     weathers: Dict[str, utils.Weather],
@@ -72,8 +75,9 @@ def prepare_data_for_simulation(
     weather_and_mapping_combinations = []
     full_strategy_data = {}
     for circuit in circuits:
-        lap_count = circuit_lap_counts.log[circuit, "LapCount"]
-        basic_strategy_data = utils.prepare_strategy_data_without_weather_and_weather_context(lap_count, 15, 40)
+        full_strategy_data[circuit] = {}
+        lap_count = circuit_lap_counts.loc[circuit, "LapCount"]
+        basic_strategy_data = utils.prepare_strategy_data_without_weather_and_weather_context(lap_count, 15, 40) # type:ignore
         for weather_name, weather in weathers.items():
             for compound_mapping_name, compound_mapping in compound_mappings.items():
                 id = len(weather_and_mapping_combinations)
@@ -84,7 +88,7 @@ def prepare_data_for_simulation(
                     "CompoundMappingName": compound_mapping_name
                 })
 
-                full_strategy_data[id] = utils.prepare_full_strategy_data(
+                full_strategy_data[circuit][id] = utils.prepare_full_strategy_data(
                     basic_strategy_data, 
                     compound_mapping, 
                     weather
@@ -99,6 +103,7 @@ def prepare_data_for_simulation(
 class EvaluationResults(TypedDict):
     EvaluationResults: pd.DataFrame
 
-def evaluate_strategies_and_report(results: SimulationResults) 
+# def evaluate_strategies_and_report(results: SimulationResults):
+#     pass
 
 
