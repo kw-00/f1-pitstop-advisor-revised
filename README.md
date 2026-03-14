@@ -1,5 +1,17 @@
 # F1-PITSTOP-ADVISOR
 
+# Environment installation
+In order to prepare your Python environment for the project:
+1. Make sure you have Python 3.11 installed
+1. Ensure you're in the project's root folder
+1. Run the following commands: 
+    #### Windows
+
+    ```py -3.11 -m venv .venv; .venv/Scripts/activate; pip install poetry; poetry install --no-root```
+
+    #### Mac
+    ```python3.11 -m venv .venv; source .venv/bin/activate; pip install poetry; poetry install --no-root```
+
 ## What this is about
 The goal of this project is to create a system capable of creating effective pit-stop strategies for Formula 1 races.
 
@@ -17,7 +29,7 @@ The most important attributes (apart from the target) are **tyre compound**, **t
 
 The values of those 3 attributes depend solely on pit-stop strategy. Let's call them the **Big Three**. 
 
-"*We have a strategy*" leads us to "*We know the values for every lap of the race*".
+"*We have a strategy*" leads us to "*We know the Big Three values for every lap of the race*".
 
 These 3 variables have a significant influence on lap time. This is important. Through them, we can **model the influence of pit-stop strategy on lap times**, and therefore the total time it takes to complete all laps of the race. Which in turn directly influences a driver's success.
 
@@ -51,11 +63,15 @@ Therefore:
 - Each lap is compared to other laps by the same driver in the same session — differences between drivers no longer introduce strong bias. Even the effect of changes in a driver's skill is mitigated, since a driver's skill does not change significantly throughout one session.
 - Each driver uses one car during a session — therefore, the effect of technological differences is also mitigated.
 
-# The data processing pipeline
-Each part of the process is represented by a Jupyter Notebook.
+# Project structure
+## Folder structure
+The main logic of the experiment lives in the [experiments](./experiments) folder. The notebooks that actually run the experiment are directly inside it. Furthermore, this folder contains some other files and subfolders.
 
-## Create dataset
-[Notebook link](./experiments/1_create_dataset.ipynb)
+## The data processing pipeline
+Each part of the process is represented by a Jupyter Notebook. 
+
+### Create dataset
+[1_create_dataset.ipynb](./experiments/1_create_dataset.ipynb)
 
 The first step involves loading and processing the data. Here's a quick overview:
 1. Extract lap data and weather data from *FastF1* and merge them together
@@ -68,24 +84,38 @@ The first step involves loading and processing the data. Here's a quick overview
 
 For more details, check the notebook itself.
 
-## Dataset analysis
-[Notebook link](./experiments/2_dataset_analysis.ipynb)
+### Dataset analysis
+[2_dataset_analysis.ipynb](./experiments/2_dataset_analysis.ipynb)
 
 Here we perform some data analysis. We take a look at the data in its current form and visualize the correlations between the target and the remaining attributes.
 
-# Model selection
-[Notebook link](./experiments/3_model_selection.ipynb)
+### Model selection
+[3_model_selection.ipynb](./experiments/3_model_selection.ipynb)
 
 Here we train regression models using a broad set of machine learning algorithms. For each algorithm, we tweak various parameters to find the best ones.
 
 Lastly, we compare the best models for each algorithm and compare them. The best one will be used for strategy evaluation.
 
-# Simulation
-[Notebook link](./experiments/4_simulation.ipynb)
+### Simulation
+[4_simulation.ipynb](./experiments/4_simulation.ipynb)
 
 Finally, we generate a broad range of strategies and evaluate them using the selected model. Strategies are selected for every circuit, with various weather conditions and tyre compound nominations.
 
 The Z-scores of each lap's time are plotted for every strategy generated. This allows a better understanding of how the system is performing and whether its strategic choices are sensible.
+
+### Orchestration
+There is one more notebook — [00_orchestration.ipynb](./experiments/00_orchestration.ipynb) — which is used to run the ones mentioned earlier sequentially, from one place.
+
+## Data files
+
+[sessions.pickle](./experiments/sessions.pickle) — a Python object saved using *pickle*. It was created using the FastF1 library and contains most of the data relevant to this project. 
+
+[compounds_map.csv](./experiments/compounds_map.csv) — a table that contains compound nominations for every relevant race session. Compound nominations are in other words mappings from nominal tyre type available during a race (*SOFT*, *MEDIUM*, *HARD*) and real compound type (*C1*, *C2*, ..., *C5*). It is used to determine what real compound types were used in historical races.
+
+## Figures
+[Link](./experiments/figures)
+
+This folder contains figures generated during data processing, analysis and simulation. Their role is to visualize both the training data itself and the simulation results.
 
 # Data source
 The main data source is the [FastF1](https://docs.fastf1.dev/index.html) Python library. Secondly, data about historical compound nominations was scraped off the Internet, primarily Wikipedia.
@@ -96,15 +126,5 @@ This project is based on my thesis project, which I completed together with [qua
 - Simplified code with lower-level operations abstracted away through functions
 - Significant optimization of the algorithms used to generate and evaluate strategies
 
-# Environment installation
-In order to prepare your Python environment for the project:
-1. Make sure you have Python 3.11 installed
-1. Ensure you're in the project's root folder
-1. Run the following commands: 
-    #### Windows
 
-    ```py -3.11 -m venv .venv; .venv/Scripts/activate; pip install poetry; poetry install```
-
-    #### Mac
-    ```python3.11 -m venv .venv; source .venv/bin/activate; pip install poetry; poetry install```
 
