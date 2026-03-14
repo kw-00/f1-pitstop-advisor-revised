@@ -110,7 +110,7 @@ There is one more notebook — [00_orchestration.ipynb](./experiments/00_orchest
 
 [sessions.pickle](./experiments/sessions.pickle) — a Python object saved using *pickle*. It was created using the FastF1 library and contains most of the data relevant to this project. 
 
-[compounds_map.csv](./experiments/compounds_map.csv) — a table that contains compound nominations for every relevant race session. Compound nominations are in other words mappings from nominal tyre type available during a race (*SOFT*, *MEDIUM*, *HARD*) and real compound type (*C1*, *C2*, ..., *C5*). It is used to determine what real compound types were used in historical races.
+[compounds_map.csv](./experiments/compounds_map.csv) — a table that contains compound nominations for every relevant race session. Compound nominations are in other words mappings from nominal tyre type available during a race (*SOFT*, *MEDIUM*, *HARD*) and real compound type (*C1*, *C2*, ..., *C6*). It is used to determine what real compound types were used in historical races.
 
 ## Figures
 [Link](./experiments/figures)

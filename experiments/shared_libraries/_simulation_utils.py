@@ -13,7 +13,7 @@ import statistics
 
 
 CompoundType = Literal["SOFT", "MEDIUM", "HARD"]
-RealCompoundType = Literal["C1", "C2", "C3", "C4", "C5"]
+RealCompoundType = Literal["C1", "C2", "C3", "C4", "C5", "C6"]
 
 class CompoundMapping(TypedDict):
     SOFT: RealCompoundType
@@ -61,24 +61,18 @@ class __Strategy:
     
 def evaluate_strategies(strategy_data: StrategyData, model) -> StrategyDataPostEvaluation:
     strategies_df = strategy_data["Strategies"].convert_dtypes()
-    laps_df = strategy_data["Laps"].copy()
+    laps_df: pd.DataFrame = strategy_data["Laps"].copy()
     ml_part = laps_df.drop("StrategyId", axis="columns")
 
     laps_df["LapTimeZScore"] = model.predict(ml_part)
-
-    def get_score(strategy_id: int) -> float:
-        mean = laps_df.drop(laps_df[~(laps_df["StrategyId"] == strategy_id)].index, axis="index")["LapTimeZScore"].mean()
-        return mean
     
-
-    def get_score_with_message(strategy_id: int) -> float:
-        print(f"Evaluating strategy with ID of {strategy_id}...")
-        return get_score(strategy_id)
-    
-    mean_z_scores = []
-    for idx in strategies_df.index:
-        mean = get_score_with_message(idx)
-        mean_z_scores.append(mean)
+    mean_z_scores = (
+        laps_df
+            .loc[:, ["StrategyId", "LapTimeZScore"]]
+            .groupby(by="StrategyId", axis="index")
+            .mean()
+            ["LapTimeZScore"]
+    )
 
     strategies_df["MeanZScore"] = mean_z_scores
     
@@ -183,10 +177,9 @@ def _prepare_lap_data(strategy_dataframe: pd.DataFrame, race_length: int) -> pd.
 def _get_real_compounds(lap_data: pd.DataFrame, compound_mapping: CompoundMapping) -> pd.Series:
     return lap_data["Compound"].map(lambda compound: compound_mapping[compound])
 
+
 def _get_weather_dataframe(lap_data: pd.DataFrame, weather: Weather) -> pd.DataFrame:
     return pd.DataFrame([weather] * lap_data.shape[0])
-
-
 
 
 def _get_race(strategy: __Strategy, race_length: int) -> List[__Lap]:
