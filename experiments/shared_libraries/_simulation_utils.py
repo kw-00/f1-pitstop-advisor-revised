@@ -45,6 +45,9 @@ class __Lap(TypedDict):
     Compound: CompoundType
     IsPitLap: bool
 
+class StrategyDataPostEvaluation(StrategyData):
+    pass
+
 class __Strategy:
     def __init__(self, initial_compound: CompoundType, stops: Dict[int, CompoundType]) -> None:
         self.initial_compound: CompoundType = initial_compound
@@ -56,43 +59,34 @@ class __Strategy:
     def __repr__(self) -> str:
         return str(self)
     
-def evaluate_strategies(strategy_data: StrategyData, model) -> pd.DataFrame:
+def evaluate_strategies(strategy_data: StrategyData, model) -> StrategyDataPostEvaluation:
     strategies_df = strategy_data["Strategies"].convert_dtypes()
-    laps_df = strategy_data["Laps"]
-    non_ml_part = laps_df["StrategyId"]
+    laps_df = strategy_data["Laps"].copy()
     ml_part = laps_df.drop("StrategyId", axis="columns")
-    ml_part = pd.get_dummies(ml_part)
-    processing.add_missing_dummy_columns(ml_part)
+
+    laps_df["LapTimeZScore"] = model.predict(ml_part)
 
     def get_score(strategy_id: int) -> float:
-        laps = laps_df.drop(laps_df[laps_df["StrategyId"] == strategy_id].index, axis="index").drop("StrategyId", axis="columns").convert_dtypes()
-        strategy_z_scores = model.predict(laps)
-        mean = statistics.mean(strategy_z_scores)
+        mean = laps_df.drop(laps_df[~(laps_df["StrategyId"] == strategy_id)].index, axis="index")["LapTimeZScore"].mean()
         return mean
     
 
     def get_score_with_message(strategy_id: int) -> float:
         print(f"Evaluating strategy with ID of {strategy_id}...")
         return get_score(strategy_id)
+    
+    mean_z_scores = []
+    for idx in strategies_df.index:
+        mean = get_score_with_message(idx)
+        mean_z_scores.append(mean)
 
-
-    mean_z_scores = (
-        strategies_df["Id"]
-            .drop(strategies_df[~strategies_df["Id"].isin(list(range(100)))].index, axis="index")
-            .apply(get_score_with_message)
-    )
+    strategies_df["MeanZScore"] = mean_z_scores
     
     print("Done.")
-    return pd.concat(
-        [
-            strategies_df,
-            pd.DataFrame({
-                "MeanLapTimeZScore": mean_z_scores
-            })
-        ],
-        axis="columns",
-        ignore_index=True
-    )
+    return {
+        "Strategies": strategies_df,
+        "Laps": laps_df
+    }
 
 def prepare_strategy_data_without_weather_and_weather_context(
             race_length: int, 
