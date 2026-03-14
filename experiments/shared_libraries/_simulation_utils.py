@@ -69,14 +69,13 @@ def evaluate_strategies(strategy_data: StrategyData, model) -> StrategyDataPostE
     mean_z_scores = (
         laps_df
             .loc[:, ["StrategyId", "LapTimeZScore"]]
-            .groupby(by="StrategyId", axis="index")
+            .groupby(by="StrategyId")
             .mean()
             ["LapTimeZScore"]
     )
 
     strategies_df["MeanZScore"] = mean_z_scores
     
-    print("Done.")
     return {
         "Strategies": strategies_df,
         "Laps": laps_df

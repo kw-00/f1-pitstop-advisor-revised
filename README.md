@@ -1,13 +1,25 @@
 # F1-PITSTOP-ADVISOR
+<p style="color: white">
+    Note: I have resumed this project, with two specific goals:
+</p>
+
+- **Unified dataset** — instead training separate models for each circuit, the entire bulk of the data shall be used to train one universal model. When evaluating a potential strategy for any given circuit, that model must be "aware" of the circuit's characteristics. I plan to expand the set of attributes that every data point contains by including attributes describing the circuit.
+
+- **Improved code readability and potential optimizations** — this will involve scanning the entire code, creating new abstractions where applicable as well as comments and stylistic adjustments.
+
 
 # Environment installation
 In order to prepare your Python environment for the project:
 1. Make sure you have Python 3.11 installed
 1. Ensure you're in the project's root folder
 1. Run the following commands: 
-    #### Windows
+    #### Windows (PowerShell)
 
     ```py -3.11 -m venv .venv; .venv/Scripts/activate; pip install poetry; poetry install --no-root```
+
+    #### Windows (cmd)
+
+    ```py -3.11 -m venv .venv & .venv/Scripts/activate & pip install poetry & poetry install --no-root```
 
     #### Mac
     ```python3.11 -m venv .venv; source .venv/bin/activate; pip install poetry; poetry install --no-root```
@@ -120,7 +132,7 @@ This folder contains figures generated during data processing, analysis and simu
 # Data source
 The main data source is the [FastF1](https://docs.fastf1.dev/index.html) Python library. Secondly, data about historical compound nominations was scraped off the Internet, primarily Wikipedia.
 
-## Acknowledgement
+## Project history
 This project is based on my thesis project, which I completed together with [quaspar33](https://github.com/quaspar33). It is a comprehensively revised version of the original, featuring three direct improvements:
 - Removal of laps affected by unpredictable incidents as well as outliers
 - Simplified code with lower-level operations abstracted away through functions
