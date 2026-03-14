@@ -122,7 +122,7 @@ def add_missing_dummy_columns(data: pd.DataFrame) -> None:
     columns = []
     for compound in ["SOFT", "MEDIUM", "HARD"]:
         columns.append(f"Compound_{compound}")
-    for real_compound in ["C1", "C2", "C3", "C4", "C5"]:
+    for real_compound in ["C1", "C2", "C3", "C4", "C5", "C6"]:
         columns.append(f"RealCompound_{real_compound}")
     for direction in ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]:
         columns.append(f"WindDirection_{direction}")
