@@ -67,15 +67,16 @@ DEFAULT_SEARCHES = {
     ),
 
     "PolynomialLassoCV": GridSearchCV(
-        make_pipeline(StandardScaler(), PCA(), PolynomialFeatures(), LassoCV(max_iter=100_000, alphas=[0.01, 0.1, 1])),
+        make_pipeline(StandardScaler(), PCA(), PolynomialFeatures(), LassoCV(max_iter=10_000, alphas=[0.01, 0.1, 1])),
         {
             "polynomialfeatures__degree": [2, 3],
             "pca__n_components": [0.98, 0.95, 0.9]
         }
     ),
 
+    
     "PolynomialElasticNetCV": GridSearchCV(
-        make_pipeline(StandardScaler(), PCA(), PolynomialFeatures(), ElasticNetCV(max_iter=100_000, l1_ratio=[0.2, 0.5, 0.8])),
+        make_pipeline(StandardScaler(), PCA(), PolynomialFeatures(), ElasticNetCV(max_iter=10_000, l1_ratio=[0.25, 0.5, 0.75])),
         {
             "polynomialfeatures__degree": [2, 3],
             "pca__n_components": [0.98, 0.95, 0.9]

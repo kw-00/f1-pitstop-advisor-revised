@@ -108,6 +108,7 @@ def prepare_full_strategy_data(
     full_lap_data["RealCompound"] = real_compounds
     dummies = pd.get_dummies(full_lap_data)
     processing.add_missing_dummy_columns(dummies)
+    processing.sort_columns(dummies)
 
     return {
         "Strategies": strategies_df,

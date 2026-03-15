@@ -131,6 +131,10 @@ def add_missing_dummy_columns(data: pd.DataFrame) -> None:
         if column not in data.columns:
             data[column] = False
 
+def sort_columns(data: pd.DataFrame) -> None:
+    data.sort_index(axis="columns", ascending=True, inplace=True)
+
+
 def _join_sessions_and_compound_mappings(sessions: List[Session], compounds_map: pd.DataFrame) -> List[Tuple[Session, pd.DataFrame]]:
     # Create queue of compound data
     compd_q = []
